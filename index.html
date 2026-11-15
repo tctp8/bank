@@ -58,6 +58,19 @@
     .special-chip.disabled .chip-count { background: #e2e4e8; color: #8a93a0; }
     .special-chip.other { border-color: #e0b96a; }
     .special-chip.other .chip-name { color: #a86f1e; }
+    /* 特殊練習區塊 */
+    .practice-section { margin-top: 24px; padding-top: 20px; border-top: 2px dashed #dbe7f5; }
+    .practice-label { font-size: 16px; font-weight: 700; color: #7a4a9e; margin-bottom: 12px; padding-left: 4px; border-left: 4px solid #9b6fc4; }
+    .practice-buttons { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+    .practice-btn { display: inline-flex; align-items: center; gap: 8px; background: white; border: 2px solid #9b6fc4; color: #5e3a7a; border-radius: 14px; padding: 12px 20px; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.15s; user-select: none; }
+    .practice-btn:hover { background: #f5edfb; border-color: #7a4a9e; transform: translateY(-1px); }
+    .practice-btn .practice-count { background: #ede0f7; color: #5e3a7a; border-radius: 20px; padding: 2px 10px; font-size: 13px; font-weight: 600; }
+    .year-picker-panel { background: #faf5ff; border: 1.5px solid #d9c4ea; border-radius: 14px; padding: 14px 18px; margin-top: 8px; }
+    .year-picker-title { font-size: 14px; font-weight: 600; color: #5e3a7a; margin-bottom: 10px; }
+    .year-picker-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .year-picker-chip { display: inline-flex; align-items: center; gap: 6px; background: white; border: 1.5px solid #c4a9de; color: #5e3a7a; border-radius: 40px; padding: 8px 18px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.15s; user-select: none; }
+    .year-picker-chip:hover { background: #ede0f7; border-color: #7a4a9e; }
+    .year-picker-chip .year-count { background: #ede0f7; color: #5e3a7a; border-radius: 20px; padding: 1px 8px; font-size: 12px; }
     .quiz-area { background: #ffffff; border-radius: 20px; padding: 10px 0 20px 0; }
     .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
     .quiz-progress { font-size: 15px; color: #3a6ea5; font-weight: 600; background: #eef5ff; padding: 6px 16px; border-radius: 40px; }
@@ -155,6 +168,23 @@
       <div class="special-label">⭐ 特殊章節</div>
       <div class="special-chips" id="specialChips"></div>
     </div>
+    <!-- 特殊練習 -->
+    <div class="practice-section" id="practiceSection">
+      <div class="practice-label">🎯 特殊練習</div>
+      <div class="practice-buttons">
+        <button class="practice-btn" id="practiceImageBtn" type="button">
+          🖼️ 有圖片的題目
+          <span class="practice-count" id="practiceImageCount">0 題</span>
+        </button>
+        <button class="practice-btn" id="practiceYearBtn" type="button">
+          📅 依年份出 100 題
+        </button>
+      </div>
+      <div class="year-picker-panel hidden" id="yearPickerPanel">
+        <div class="year-picker-title">請選擇年份（該年份隨機取前 100 題，每頁 10 題）：</div>
+        <div class="year-picker-chips" id="yearPickerChips"></div>
+      </div>
+    </div>
   </div>
 
   <div id="quizSection" class="quiz-area hidden">
@@ -178,159 +208,67 @@
   const ONLINE_BANK_URL = 'https://raw.githubusercontent.com/tctp8/bank/main/questions.xlsx';
   const IMAGE_BASE_URL = 'https://raw.githubusercontent.com/tctp8/bank/main/emt-images/';
 
-  // ======================= 圖片清單（寫死） =======================
-  // 檔名規則：{年度}_q{題號}.png（題目附圖）或 {年度}_q{題號}_{N}.png（選項附圖，N=1→A, 2→B, 3→C, 4→D）
+  // ======================= 圖片清單 =======================
   const IMAGE_FILES = [
-    '108_q013.png',
-    '108_q026.png',
-    '108_q036.png',
-    '108_q037.png',
-    '108_q040.png',
-    '108_q046.png',
-    '108_q067_1.png',
-    '108_q067_2.png',
-    '108_q073.png',
-    '108_q074.png',
-    '109_q009_1.png',
-    '109_q009_2.png',
-    '109_q009_3.png',
-    '109_q009_4.png',
-    '109_q014.png',
-    '109_q045.png',
-    '109_q055.png',
-    '109_q064.png',
-    '109_q068.png',
-    '110_q024.png',
-    '110_q035.png',
-    '110_q039.png',
-    '110_q054.png',
-    '110_q058.png',
-    '110_q059.png',
-    '110_q063.png',
-    '111_q039.png',
-    '111_q061.png',
-    '111_q15_1.png',
-    '111_q15_2.png',
-    '111_q15_3.png',
-    '111_q15_4.png',
-    '112_q009_1.png',
-    '112_q009_2.png',
-    '112_q056.png',
-    '112_q057.png',
-    '112_q058_1.png',
-    '112_q058_2.png',
-    '112_q058_3.png',
-    '112_q058_4.png',
-    '112_q060.png',
-    '112_q083_1.png',
-    '112_q083_2.png',
-    '112_q083_3.png',
-    '112_q083_4.png',
-    '112_q088.png',
-    '113_q054.png',
-    '113_q056.png',
-    '114_q055.png',
+    '108_q013.png','108_q026.png','108_q036.png','108_q037.png','108_q040.png',
+    '108_q046.png','108_q067_1.png','108_q067_2.png','108_q073.png','108_q074.png',
+    '109_q009_1.png','109_q009_2.png','109_q009_3.png','109_q009_4.png',
+    '109_q014.png','109_q045.png','109_q055.png','109_q064.png','109_q068.png',
+    '110_q024.png','110_q035.png','110_q039.png','110_q054.png','110_q058.png',
+    '110_q059.png','110_q063.png',
+    '111_q039.png','111_q061.png','111_q15_1.png','111_q15_2.png','111_q15_3.png','111_q15_4.png',
+    '112_q009_1.png','112_q009_2.png','112_q056.png','112_q057.png',
+    '112_q058_1.png','112_q058_2.png','112_q058_3.png','112_q058_4.png',
+    '112_q060.png','112_q083_1.png','112_q083_2.png','112_q083_3.png','112_q083_4.png',
+    '112_q088.png','113_q054.png','113_q056.png','114_q055.png',
   ];
 
-  // 建立圖片索引：key = "{年度}_{題號整數}"，value = { 題目圖: 檔名|null, 選項圖: {1:檔名,2:檔名,...} }
   const IMAGE_MAP = {};
   (function buildImageMap() {
     IMAGE_FILES.forEach(fname => {
-      // 解析檔名：{year}_q{num}{_idx}.png
       const m = fname.match(/^(\d+)_q(\d+)(?:_(\d+))?\.png$/i);
-      if (!m) {
-        console.warn('無法解析圖片檔名：', fname);
-        return;
-      }
+      if (!m) { console.warn('無法解析圖片檔名：', fname); return; }
       const year = m[1];
       const num = parseInt(m[2], 10);
       const idx = m[3] ? parseInt(m[3], 10) : null;
       const key = `${year}_${num}`;
-      if (!IMAGE_MAP[key]) {
-        IMAGE_MAP[key] = { question: null, options: {} };
-      }
-      if (idx === null) {
-        IMAGE_MAP[key].question = fname;
-      } else {
-        IMAGE_MAP[key].options[idx] = fname;
-      }
+      if (!IMAGE_MAP[key]) IMAGE_MAP[key] = { question: null, options: {} };
+      if (idx === null) IMAGE_MAP[key].question = fname;
+      else IMAGE_MAP[key].options[idx] = fname;
     });
   })();
 
-  // 依年度 + 題號取得圖片資訊
   function getImagesForQuestion(year, num) {
     const key = `${String(year).trim()}_${parseInt(num, 10)}`;
     return IMAGE_MAP[key] || null;
   }
-
-  function buildImageUrl(filename) {
-    return IMAGE_BASE_URL + encodeURIComponent(filename);
-  }
+  function buildImageUrl(filename) { return IMAGE_BASE_URL + encodeURIComponent(filename); }
 
   // ======================= 章節對照表 =======================
   const SPECIAL_CHAPTERS = ['ACLS', 'ATLS', 'APLS', 'PHTLS', 'ETTC'];
   const OTHER_KEY = 'OTHER';
 
   const NUMBER_CHAPTERS = {
-    '1': '1 緊急醫療救護體系概論',
-    '2': '2 台灣緊急醫療救護體系',
-    '3': '3 救護技術員的角色與責任',
-    '4': '4 緊急醫療救護相關法律規範',
-    '5': '5 救護技術員的職業安全與傳染病防治',
-    '6': '6 救護技術員的心理衛生',
-    '7': '7 緊急醫療救護派遣系統',
-    '8': '8 社區層級的緊急醫療反應',
-    '9': '9 緊急醫療救護的品質管理',
-    '10': '10 緊急救護之新科技應用',
-    '11': '11 救護技術員的科學思考基礎',
-    '12': '12 人體基本解剖與生理',
-    '13': '13 從出生到死亡：一生的成長與發展',
-    '14': '14 呼吸道處置與通氣-原理篇',
-    '15': '15 呼吸道處置與通氣-技術篇',
-    '16': '16 緊急救護藥理學',
-    '17': '17 藥物給予及給藥途徑',
-    '18': '18 醫病關係與溝通技巧',
-    '19': '19 病史詢問',
-    '20': '20 身體診察',
-    '21': '21 到院前超音波應用',
-    '22': '22 病人評估與決策',
-    '23': '23 基本生命支持與急救',
-    '24': '24 復甦醫學新進展',
-    '25': '25 外傷總論與重大外傷',
-    '26': '26 出血、休克與止血治療',
-    '27': '27 頭頸脊椎與顏面外傷',
-    '28': '28 胸部外傷',
-    '29': '29 腹骨盆部外傷',
-    '30': '30 軟組織肌肉骨骼外傷與壓砸傷',
-    '31': '31 灼傷與電灼害',
-    '32': '32 特殊創傷族群及親密伴侶暴力',
-    '33': '33 心電圖判定',
-    '34': '34 心臟與血管急症',
-    '35': '35 呼吸系統急症',
-    '36': '36 神經系統急症與急性腦中風',
-    '37': '37 內分泌與代謝急症',
-    '38': '38 腸胃急症',
-    '39': '39 血液與腫瘤急症',
-    '40': '40 過敏與免疫急症',
-    '41': '41 泌尿與腎臟急症',
-    '42': '42 感染急症',
-    '43': '43 新興傳染病與疫災防治',
-    '44': '44 環境急症',
-    '45': '45 野外醫學',
-    '46': '46 行為急症與精神急症',
-    '47': '47 高齡緊急救護概論',
-    '48': '48 新生兒急救與小兒急症',
-    '49': '49 婦產急症',
-    '50': '50 毒物學',
-    '51': '51 醫療管路、維生器材與常見的院內檢查',
-    '52': '52 大量病人與災難應變',
-    '53': '53 危害物質與核生化應變',
-    '54': '54 大型活動之緊急醫療救護',
-    '55': '55 運動賽事救護人員的角色與任務',
-    '56': '56 高危情境或侷限空間病人之緊急醫療救護',
-    '57': '57 常見天然災害',
-    '58': '58 空中救護體系',
-    '59': '59 緊急救護中的團隊資源管理',
+    '1': '1 緊急醫療救護體系概論', '2': '2 台灣緊急醫療救護體系', '3': '3 救護技術員的角色與責任',
+    '4': '4 緊急醫療救護相關法律規範', '5': '5 救護技術員的職業安全與傳染病防治',
+    '6': '6 救護技術員的心理衛生', '7': '7 緊急醫療救護派遣系統', '8': '8 社區層級的緊急醫療反應',
+    '9': '9 緊急醫療救護的品質管理', '10': '10 緊急救護之新科技應用', '11': '11 救護技術員的科學思考基礎',
+    '12': '12 人體基本解剖與生理', '13': '13 從出生到死亡：一生的成長與發展',
+    '14': '14 呼吸道處置與通氣-原理篇', '15': '15 呼吸道處置與通氣-技術篇', '16': '16 緊急救護藥理學',
+    '17': '17 藥物給予及給藥途徑', '18': '18 醫病關係與溝通技巧', '19': '19 病史詢問', '20': '20 身體診察',
+    '21': '21 到院前超音波應用', '22': '22 病人評估與決策', '23': '23 基本生命支持與急救',
+    '24': '24 復甦醫學新進展', '25': '25 外傷總論與重大外傷', '26': '26 出血、休克與止血治療',
+    '27': '27 頭頸脊椎與顏面外傷', '28': '28 胸部外傷', '29': '29 腹骨盆部外傷',
+    '30': '30 軟組織肌肉骨骼外傷與壓砸傷', '31': '31 灼傷與電灼害', '32': '32 特殊創傷族群及親密伴侶暴力',
+    '33': '33 心電圖判定', '34': '34 心臟與血管急症', '35': '35 呼吸系統急症',
+    '36': '36 神經系統急症與急性腦中風', '37': '37 內分泌與代謝急症', '38': '38 腸胃急症',
+    '39': '39 血液與腫瘤急症', '40': '40 過敏與免疫急症', '41': '41 泌尿與腎臟急症', '42': '42 感染急症',
+    '43': '43 新興傳染病與疫災防治', '44': '44 環境急症', '45': '45 野外醫學',
+    '46': '46 行為急症與精神急症', '47': '47 高齡緊急救護概論', '48': '48 新生兒急救與小兒急症',
+    '49': '49 婦產急症', '50': '50 毒物學', '51': '51 醫療管路、維生器材與常見的院內檢查',
+    '52': '52 大量病人與災難應變', '53': '53 危害物質與核生化應變', '54': '54 大型活動之緊急醫療救護',
+    '55': '55 運動賽事救護人員的角色與任務', '56': '56 高危情境或侷限空間病人之緊急醫療救護',
+    '57': '57 常見天然災害', '58': '58 空中救護體系', '59': '59 緊急救護中的團隊資源管理',
     '60': '60 緊急救護技術的教學技巧',
   };
 
@@ -344,9 +282,12 @@
   let selectedYears = new Set();
 
   let currentChapter = '';
+  let currentMode = '';      // 'chapter' | 'images' | 'year100'
+  let currentYear = '';
   let fullQuestions = [];
   let currentQuestions = [];
   let pageSize = 'all';
+  let forcePageSize = null;  // 特殊模式強制每頁題數（例如 10）
   let currentPage = 0;
   let totalPages = 1;
 
@@ -377,6 +318,12 @@
   const numberChapterGrid = document.getElementById('numberChapterGrid');
   const specialChips = document.getElementById('specialChips');
 
+  const practiceImageBtn = document.getElementById('practiceImageBtn');
+  const practiceImageCount = document.getElementById('practiceImageCount');
+  const practiceYearBtn = document.getElementById('practiceYearBtn');
+  const yearPickerPanel = document.getElementById('yearPickerPanel');
+  const yearPickerChips = document.getElementById('yearPickerChips');
+
   const quizSection = document.getElementById('quizSection');
   const questionContainer = document.getElementById('questionContainer');
   const quizProgress = document.getElementById('quizProgress');
@@ -403,7 +350,11 @@
     fileStatus.classList.add('hidden');
   });
 
-  perPageSelect.addEventListener('change', function() { pageSize = this.value; });
+  perPageSelect.addEventListener('change', function() {
+    pageSize = this.value;
+    // 若目前在特殊模式，強制 pageSize 不影響
+    if (forcePageSize !== null) pageSize = String(forcePageSize);
+  });
 
   selectAllYearsBtn.addEventListener('click', function() {
     allYears.forEach(y => selectedYears.add(y));
@@ -430,14 +381,34 @@
     const item = e.target.closest('.chapter-item');
     if (!item || item.classList.contains('disabled')) return;
     const chapterKey = item.dataset.chapter;
-    if (chapterKey) startQuiz(chapterKey);
+    if (chapterKey) startQuiz('chapter', chapterKey);
   });
 
   specialChips.addEventListener('click', function(e) {
     const chip = e.target.closest('.special-chip');
     if (!chip || chip.classList.contains('disabled')) return;
     const chapterKey = chip.dataset.chapter;
-    if (chapterKey) startQuiz(chapterKey);
+    if (chapterKey) startQuiz('chapter', chapterKey);
+  });
+
+  // 有圖片的題目
+  practiceImageBtn.addEventListener('click', function() {
+    startQuiz('images');
+  });
+
+  // 依年份出 100 題：展開年份選單
+  practiceYearBtn.addEventListener('click', function() {
+    yearPickerPanel.classList.toggle('hidden');
+    if (!yearPickerPanel.classList.contains('hidden')) {
+      renderYearPicker();
+    }
+  });
+
+  yearPickerChips.addEventListener('click', function(e) {
+    const chip = e.target.closest('.year-picker-chip');
+    if (!chip) return;
+    const year = chip.dataset.year;
+    if (year) startQuiz('year100', year);
   });
 
   questionContainer.addEventListener('click', function(e) {
@@ -479,9 +450,7 @@
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.arrayBuffer();
       })
-      .then(data => {
-        loadWorkbookFromArrayBuffer(data, '線上題庫');
-      })
+      .then(data => { loadWorkbookFromArrayBuffer(data, '線上題庫'); })
       .catch(err => {
         console.warn('自動載入失敗：', err);
         autoLoadStatus.classList.add('hidden');
@@ -500,9 +469,7 @@
     fileStatus.classList.remove('hidden');
 
     const reader = new FileReader();
-    reader.onload = function(evt) {
-      loadWorkbookFromArrayBuffer(evt.target.result, file.name);
-    };
+    reader.onload = function(evt) { loadWorkbookFromArrayBuffer(evt.target.result, file.name); };
     reader.readAsArrayBuffer(file);
   }
 
@@ -522,9 +489,7 @@
       const findHeader = (names) => {
         for (let name of names) {
           if (headerIndexMap[name] !== undefined) return headerIndexMap[name];
-          for (let h of headers) {
-            if (h.toLowerCase() === name.toLowerCase()) return headerIndexMap[h];
-          }
+          for (let h of headers) if (h.toLowerCase() === name.toLowerCase()) return headerIndexMap[h];
         }
         return undefined;
       };
@@ -541,19 +506,7 @@
       const idxAns = findHeader(['答案']);
       const idxExp = findHeader(['解析']);
 
-      const requiredIdx = {
-        'hashtag': idxHashtag,
-        '題目序號': idxQid,
-        '年度': idxYear,
-        '題號': idxNum,
-        '題目': idxQText,
-        '選項A': idxA,
-        '選項B': idxB,
-        '選項C': idxC,
-        '選項D': idxD,
-        '答案': idxAns,
-        '解析': idxExp,
-      };
+      const requiredIdx = { 'hashtag': idxHashtag, '題目序號': idxQid, '年度': idxYear, '題號': idxNum, '題目': idxQText, '選項A': idxA, '選項B': idxB, '選項C': idxC, '選項D': idxD, '答案': idxAns, '解析': idxExp };
       for (let [k, v] of Object.entries(requiredIdx)) {
         if (v === undefined) throw new Error(`缺少必要欄位：${k}`);
       }
@@ -571,9 +524,7 @@
         let m;
         while ((m = re.exec(rawTag)) !== null) {
           let tag = m[1];
-          if (/^\d+$/.test(tag)) {
-            tag = String(parseInt(tag, 10));
-          }
+          if (/^\d+$/.test(tag)) tag = String(parseInt(tag, 10));
           tags.push(tag);
         }
 
@@ -614,6 +565,7 @@
 
       applyYearFilter();
       renderYearChips();
+      updatePracticeCounts();
     } catch (err) {
       console.error(err);
       autoLoadStatus.classList.add('hidden');
@@ -627,6 +579,12 @@
       chapterSection.classList.add('hidden');
       quizSection.classList.add('hidden');
     }
+  }
+
+  // ======================= 更新特殊練習的題數 =======================
+  function updatePracticeCounts() {
+    const imgCount = questionBank.filter(q => getImagesForQuestion(q.年度, q.題號) !== null).length;
+    practiceImageCount.textContent = `${imgCount} 題`;
   }
 
   // ======================= 年份篩選 =======================
@@ -703,6 +661,23 @@
     specialChips.appendChild(otherChip);
   }
 
+  // ======================= 年份選擇器（依年份出 100 題） =======================
+  function renderYearPicker() {
+    yearPickerChips.innerHTML = '';
+    if (allYears.length === 0) {
+      yearPickerChips.innerHTML = '<span style="color:#7b8fa8;font-size:14px;">無年份資料</span>';
+      return;
+    }
+    allYears.forEach(year => {
+      const count = questionBank.filter(q => q.年度 === year).length;
+      const chip = document.createElement('div');
+      chip.className = 'year-picker-chip';
+      chip.dataset.year = year;
+      chip.innerHTML = `${escapeHtml(year)} 年 <span class="year-count">${count} 題</span>`;
+      yearPickerChips.appendChild(chip);
+    });
+  }
+
   // ======================= 測驗邏輯 =======================
   function shuffleArray(arr) {
     const a = arr.slice();
@@ -713,10 +688,38 @@
     return a;
   }
 
-  function startQuiz(chapterKey) {
-    currentChapter = chapterKey;
-    fullQuestions = shuffleArray(chapterMap.get(chapterKey) || []);
-    if (fullQuestions.length === 0) return;
+  function startQuiz(mode, param) {
+    currentMode = mode;
+    forcePageSize = null;
+
+    if (mode === 'chapter') {
+      currentChapter = param;
+      currentYear = '';
+      fullQuestions = shuffleArray(chapterMap.get(param) || []);
+      forcePageSize = null;
+      pageSize = perPageSelect.value;
+    } else if (mode === 'images') {
+      currentChapter = '';
+      currentYear = '';
+      // 所有有圖片的題目（不受年份篩選影響）
+      const imgQuestions = questionBank.filter(q => getImagesForQuestion(q.年度, q.題號) !== null);
+      fullQuestions = shuffleArray(imgQuestions);
+      forcePageSize = null;
+      pageSize = perPageSelect.value;
+    } else if (mode === 'year100') {
+      currentChapter = '';
+      currentYear = param;
+      // 該年份所有題目，照順序取前 100 題（不受年份篩選影響）
+      const yearQuestions = questionBank.filter(q => q.年度 === param);
+      fullQuestions = yearQuestions.slice(0, 100);
+      forcePageSize = 10;  // 強制每頁 10 題
+      pageSize = '10';
+    }
+
+    if (fullQuestions.length === 0) {
+      alert('此模式目前沒有題目');
+      return;
+    }
 
     userAnswers = new Array(fullQuestions.length).fill('');
     answeredState = new Array(fullQuestions.length).fill(false);
@@ -740,6 +743,12 @@
     const validTags = q.章節標籤.filter(tag => VALID_KEYS.has(tag));
     if (validTags.length === 0) return '其他';
     return validTags.map(tag => getChapterDisplayName(tag)).join('、');
+  }
+
+  function getModeTitle() {
+    if (currentMode === 'images') return '🖼️ 有圖片的題目';
+    if (currentMode === 'year100') return `📅 ${currentYear} 年（前 100 題）`;
+    return getChapterDisplayName(currentChapter);
   }
 
   function computeTotalPages() {
@@ -766,7 +775,7 @@
     }
     currentQuestions = fullQuestions.slice(start, end);
 
-    quizProgress.textContent = `第 ${start + 1}–${end} 題 / 共 ${fullQuestions.length} 題 ｜ 第 ${currentPage + 1} / ${totalPages} 頁 ｜ ${getChapterDisplayName(currentChapter)}`;
+    quizProgress.textContent = `第 ${start + 1}–${end} 題 / 共 ${fullQuestions.length} 題 ｜ 第 ${currentPage + 1} / ${totalPages} 頁 ｜ ${getModeTitle()}`;
 
     let html = '';
     currentQuestions.forEach((q, idx) => {
@@ -781,8 +790,6 @@
       ].filter(opt => opt.text !== '');
       const correctAnswer = q.答案;
       const isMultipleChoice = correctAnswer.length > 1;
-
-      // 取得此題圖片
       const imgInfo = getImagesForQuestion(q.年度, q.題號);
 
       html += `
@@ -791,13 +798,8 @@
           <div class="question-text">${escapeHtml(q.題目)}</div>
       `;
 
-      // 題目附圖（無 _N 後綴）
       if (imgInfo && imgInfo.question) {
-        html += `
-          <div class="question-image">
-            <img src="${buildImageUrl(imgInfo.question)}" alt="題目附圖" loading="lazy">
-          </div>
-        `;
+        html += `<div class="question-image"><img src="${buildImageUrl(imgInfo.question)}" alt="題目附圖" loading="lazy"></div>`;
       }
 
       html += `
@@ -812,14 +814,9 @@
       options.forEach(opt => {
         let selectedClass = (isAnswered && userAnswer.includes(opt.key)) ? 'selected' : '';
         const disabledClass = isAnswered ? 'disabled' : '';
-        // 選項附圖（有 _N 後綴，N 對應選項編號）
         let optImgHtml = '';
         if (imgInfo && imgInfo.options && imgInfo.options[opt.idx]) {
-          optImgHtml = `
-            <div class="option-image">
-              <img src="${buildImageUrl(imgInfo.options[opt.idx])}" alt="選項 ${opt.key} 附圖" loading="lazy">
-            </div>
-          `;
+          optImgHtml = `<div class="option-image"><img src="${buildImageUrl(imgInfo.options[opt.idx])}" alt="選項 ${opt.key} 附圖" loading="lazy"></div>`;
         }
         html += `
           <div class="option-item ${selectedClass} ${disabledClass}" data-global-idx="${globalIdx}" data-option="${opt.key}">
@@ -930,15 +927,21 @@
     finishSection.classList.add('hidden');
     chapterSection.classList.remove('hidden');
     currentChapter = '';
+    currentMode = '';
+    currentYear = '';
     fullQuestions = [];
     currentQuestions = [];
     currentPage = 0;
     totalPages = 1;
+    forcePageSize = null;
+    pageSize = perPageSelect.value;
     userAnswers = [];
     answeredState = [];
     questionContainer.innerHTML = '';
     pageActions.innerHTML = '';
     quizProgress.textContent = '';
+    // 收起年份選擇器
+    yearPickerPanel.classList.add('hidden');
   }
 
   function escapeHtml(str) {
@@ -959,6 +962,7 @@
   quizSection.classList.add('hidden');
   finishSection.classList.add('hidden');
   uploadCompact.classList.add('hidden');
+  yearPickerPanel.classList.add('hidden');
 </script>
 </body>
 </html>
