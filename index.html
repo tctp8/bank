@@ -40,7 +40,6 @@
     .year-chip:hover { border-color: #3a6ea5; }
     .chapter-section { margin-top: 10px; }
     .chapter-title { font-size: 20px; font-weight: 600; color: #1e3a5f; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
-    /* 數字章節網格：自適應 */
     .chapter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; margin-bottom: 8px; }
     .chapter-item { background: white; border: 1px solid #d0ddee; border-radius: 14px; padding: 14px 16px; font-weight: 500; color: #2a405c; cursor: pointer; transition: 0.15s; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); user-select: none; }
     .chapter-item:hover:not(.disabled) { background: #eef5ff; border-color: #3a6ea5; transform: translateY(-1px); box-shadow: 0 6px 12px rgba(30,58,95,0.08); }
@@ -48,7 +47,6 @@
     .chapter-item .chapter-name { flex: 1; white-space: normal; word-break: break-word; line-height: 1.5; font-size: 15px; }
     .chapter-item .count-badge { flex-shrink: 0; background: #d9e6f5; color: #1e3a5f; border-radius: 20px; padding: 2px 10px; font-size: 12px; font-weight: 600; white-space: nowrap; }
     .chapter-item.disabled .count-badge { background: #e2e4e8; color: #8a93a0; }
-    /* 特殊章節 chip 列 */
     .special-section { margin-top: 18px; margin-bottom: 8px; }
     .special-label { font-size: 15px; font-weight: 700; color: #3a6ea5; margin-bottom: 10px; padding-left: 4px; border-left: 4px solid #3a6ea5; }
     .special-chips { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -60,7 +58,6 @@
     .special-chip.disabled .chip-count { background: #e2e4e8; color: #8a93a0; }
     .special-chip.other { border-color: #e0b96a; }
     .special-chip.other .chip-name { color: #a86f1e; }
-    /* 測驗區 */
     .quiz-area { background: #ffffff; border-radius: 20px; padding: 10px 0 20px 0; }
     .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
     .quiz-progress { font-size: 15px; color: #3a6ea5; font-weight: 600; background: #eef5ff; padding: 6px 16px; border-radius: 40px; }
@@ -70,13 +67,18 @@
     .question-index-tag { display: inline-block; background: #e0edff; color: #1e3a5f; font-weight: 700; font-size: 14px; padding: 3px 14px; border-radius: 40px; margin-bottom: 12px; }
     .question-text { font-size: 17px; font-weight: 600; color: #0d2742; line-height: 1.6; margin-bottom: 16px; white-space: pre-wrap; }
     .question-meta { font-size: 13px; color: #6a7f9a; margin-bottom: 16px; display: flex; gap: 16px; flex-wrap: wrap; }
+    .question-image { margin: 12px 0 16px 0; text-align: center; }
+    .question-image img { max-width: 100%; height: auto; border-radius: 12px; border: 1px solid #dbe7f5; background: white; }
+    .option-image { margin-top: 10px; text-align: center; }
+    .option-image img { max-width: 100%; height: auto; border-radius: 10px; border: 1px solid #dbe7f5; background: white; }
     .options-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
     .option-item { display: flex; align-items: flex-start; gap: 12px; background: white; border: 1.5px solid #cddef0; border-radius: 14px; padding: 12px 16px; cursor: pointer; transition: 0.12s; font-size: 15px; line-height: 1.5; user-select: none; }
     .option-item:hover { background: #eef6ff; border-color: #3a6ea5; }
     .option-item.selected { background: #e0edff; border-color: #2a6bb0; box-shadow: 0 0 0 1px #2a6bb0; }
     .option-item.disabled { opacity: 0.75; cursor: not-allowed; }
-    .option-prefix { font-weight: 700; color: #1e3a5f; min-width: 26px; font-size: 16px; }
-    .option-text { flex: 1; color: #1e2f40; }
+    .option-prefix { font-weight: 700; color: #1e3a5f; min-width: 26px; font-size: 16px; flex-shrink: 0; }
+    .option-content { flex: 1; color: #1e2f40; }
+    .option-text { display: block; }
     .feedback-area { margin-top: 6px; border-top: 1px dashed #d0e0f0; padding-top: 16px; }
     .correct-badge { display: inline-block; background: #d4edda; color: #0e5e2d; padding: 4px 16px; border-radius: 40px; font-weight: 600; margin-bottom: 10px; font-size: 14px; }
     .wrong-badge { display: inline-block; background: #f8d7da; color: #a12b36; padding: 4px 16px; border-radius: 40px; font-weight: 600; margin-bottom: 10px; font-size: 14px; }
@@ -148,9 +150,7 @@
 
   <div id="chapterSection" class="chapter-section hidden">
     <div class="chapter-title"><span>📖 選擇章節</span></div>
-    <!-- 數字章節網格 -->
     <div class="chapter-grid" id="numberChapterGrid"></div>
-    <!-- 特殊章節 chip 列 -->
     <div class="special-section" id="specialSection">
       <div class="special-label">⭐ 特殊章節</div>
       <div class="special-chips" id="specialChips"></div>
@@ -176,8 +176,98 @@
 <script>
   // ======================= 設定 =======================
   const ONLINE_BANK_URL = 'https://raw.githubusercontent.com/tctp8/bank/main/questions.xlsx';
+  const IMAGE_BASE_URL = 'https://raw.githubusercontent.com/tctp8/bank/main/emt-images/';
 
-  // ======================= 章節對照表（寫死） =======================
+  // ======================= 圖片清單（寫死） =======================
+  // 檔名規則：{年度}_q{題號}.png（題目附圖）或 {年度}_q{題號}_{N}.png（選項附圖，N=1→A, 2→B, 3→C, 4→D）
+  const IMAGE_FILES = [
+    '108_q013.png',
+    '108_q026.png',
+    '108_q036.png',
+    '108_q037.png',
+    '108_q040.png',
+    '108_q046.png',
+    '108_q067_1.png',
+    '108_q067_2.png',
+    '108_q073.png',
+    '108_q074.png',
+    '109_q009_1.png',
+    '109_q009_2.png',
+    '109_q009_3.png',
+    '109_q009_4.png',
+    '109_q014.png',
+    '109_q045.png',
+    '109_q055.png',
+    '109_q064.png',
+    '109_q068.png',
+    '110_q024.png',
+    '110_q035.png',
+    '110_q039.png',
+    '110_q054.png',
+    '110_q058.png',
+    '110_q059.png',
+    '110_q063.png',
+    '111_q039.png',
+    '111_q061.png',
+    '111_q15_1.png',
+    '111_q15_2.png',
+    '111_q15_3.png',
+    '111_q15_4.png',
+    '112_q009_1.png',
+    '112_q009_2.png',
+    '112_q056.png',
+    '112_q057.png',
+    '112_q058_1.png',
+    '112_q058_2.png',
+    '112_q058_3.png',
+    '112_q058_4.png',
+    '112_q060.png',
+    '112_q083_1.png',
+    '112_q083_2.png',
+    '112_q083_3.png',
+    '112_q083_4.png',
+    '112_q088.png',
+    '113_q054.png',
+    '113_q056.png',
+    '114_q055.png',
+  ];
+
+  // 建立圖片索引：key = "{年度}_{題號整數}"，value = { 題目圖: 檔名|null, 選項圖: {1:檔名,2:檔名,...} }
+  const IMAGE_MAP = {};
+  (function buildImageMap() {
+    IMAGE_FILES.forEach(fname => {
+      // 解析檔名：{year}_q{num}{_idx}.png
+      const m = fname.match(/^(\d+)_q(\d+)(?:_(\d+))?\.png$/i);
+      if (!m) {
+        console.warn('無法解析圖片檔名：', fname);
+        return;
+      }
+      const year = m[1];
+      const num = parseInt(m[2], 10);
+      const idx = m[3] ? parseInt(m[3], 10) : null;
+      const key = `${year}_${num}`;
+      if (!IMAGE_MAP[key]) {
+        IMAGE_MAP[key] = { question: null, options: {} };
+      }
+      if (idx === null) {
+        IMAGE_MAP[key].question = fname;
+      } else {
+        IMAGE_MAP[key].options[idx] = fname;
+      }
+    });
+  })();
+
+  // 依年度 + 題號取得圖片資訊
+  function getImagesForQuestion(year, num) {
+    const key = `${String(year).trim()}_${parseInt(num, 10)}`;
+    return IMAGE_MAP[key] || null;
+  }
+
+  function buildImageUrl(filename) {
+    return IMAGE_BASE_URL + encodeURIComponent(filename);
+  }
+
+  // ======================= 章節對照表 =======================
   const SPECIAL_CHAPTERS = ['ACLS', 'ATLS', 'APLS', 'PHTLS', 'ETTC'];
   const OTHER_KEY = 'OTHER';
 
@@ -244,7 +334,6 @@
     '60': '60 緊急救護技術的教學技巧',
   };
 
-  // 所有合法章節 key（用於判斷「其他」）
   const VALID_KEYS = new Set([...SPECIAL_CHAPTERS, ...Object.keys(NUMBER_CHAPTERS)]);
 
   // ======================= 全局狀態 =======================
@@ -337,7 +426,6 @@
     renderYearChips();
   });
 
-  // 數字章節點擊
   numberChapterGrid.addEventListener('click', function(e) {
     const item = e.target.closest('.chapter-item');
     if (!item || item.classList.contains('disabled')) return;
@@ -345,7 +433,6 @@
     if (chapterKey) startQuiz(chapterKey);
   });
 
-  // 特殊章節 chip 點擊
   specialChips.addEventListener('click', function(e) {
     const chip = e.target.closest('.special-chip');
     if (!chip || chip.classList.contains('disabled')) return;
@@ -542,16 +629,14 @@
     }
   }
 
-  // ======================= 套用年份篩選，重建 chapterMap =======================
+  // ======================= 年份篩選 =======================
   function applyYearFilter() {
     filteredBank = questionBank.filter(q => selectedYears.has(q.年度));
 
     chapterMap.clear();
     filteredBank.forEach(q => {
-      // 過濾出合法標籤
       const validTags = q.章節標籤.filter(tag => VALID_KEYS.has(tag));
       if (validTags.length === 0) {
-        // 沒有合法標籤 → 歸到「其他」
         if (!chapterMap.has(OTHER_KEY)) chapterMap.set(OTHER_KEY, []);
         chapterMap.get(OTHER_KEY).push(q);
       } else {
@@ -568,7 +653,6 @@
     chapterSection.classList.remove('hidden');
   }
 
-  // ======================= 渲染年份 chips =======================
   function renderYearChips() {
     yearChips.innerHTML = '';
     if (allYears.length === 0) {
@@ -585,9 +669,7 @@
     });
   }
 
-  // ======================= 渲染章節列表（數字網格 + 特殊 chip） =======================
   function renderChapterLists() {
-    // 數字章節網格
     numberChapterGrid.innerHTML = '';
     for (let i = 1; i <= 60; i++) {
       const key = String(i);
@@ -603,7 +685,6 @@
       numberChapterGrid.appendChild(item);
     }
 
-    // 特殊章節 chip
     specialChips.innerHTML = '';
     SPECIAL_CHAPTERS.forEach(key => {
       const qs = chapterMap.get(key) || [];
@@ -614,7 +695,6 @@
       specialChips.appendChild(chip);
     });
 
-    // 其他
     const otherQs = chapterMap.get(OTHER_KEY) || [];
     const otherChip = document.createElement('div');
     otherChip.className = 'special-chip other' + (otherQs.length === 0 ? ' disabled' : '');
@@ -694,16 +774,33 @@
       const isAnswered = answeredState[globalIdx];
       const userAnswer = userAnswers[globalIdx];
       const options = [
-        { key: 'A', text: q.選項A }, { key: 'B', text: q.選項B },
-        { key: 'C', text: q.選項C }, { key: 'D', text: q.選項D },
+        { key: 'A', text: q.選項A, idx: 1 },
+        { key: 'B', text: q.選項B, idx: 2 },
+        { key: 'C', text: q.選項C, idx: 3 },
+        { key: 'D', text: q.選項D, idx: 4 },
       ].filter(opt => opt.text !== '');
       const correctAnswer = q.答案;
       const isMultipleChoice = correctAnswer.length > 1;
+
+      // 取得此題圖片
+      const imgInfo = getImagesForQuestion(q.年度, q.題號);
 
       html += `
         <div class="question-card" data-global-idx="${globalIdx}">
           <div class="question-index-tag">第 ${globalIdx + 1} 題 / 共 ${fullQuestions.length} 題</div>
           <div class="question-text">${escapeHtml(q.題目)}</div>
+      `;
+
+      // 題目附圖（無 _N 後綴）
+      if (imgInfo && imgInfo.question) {
+        html += `
+          <div class="question-image">
+            <img src="${buildImageUrl(imgInfo.question)}" alt="題目附圖" loading="lazy">
+          </div>
+        `;
+      }
+
+      html += `
           <div class="question-meta">
             <span>📅 年度：${escapeHtml(q.年度)}</span>
             <span>🔢 題號：${escapeHtml(q.題號)}</span>
@@ -711,13 +808,26 @@
           </div>
           <div class="options-grid">
       `;
+
       options.forEach(opt => {
         let selectedClass = (isAnswered && userAnswer.includes(opt.key)) ? 'selected' : '';
         const disabledClass = isAnswered ? 'disabled' : '';
+        // 選項附圖（有 _N 後綴，N 對應選項編號）
+        let optImgHtml = '';
+        if (imgInfo && imgInfo.options && imgInfo.options[opt.idx]) {
+          optImgHtml = `
+            <div class="option-image">
+              <img src="${buildImageUrl(imgInfo.options[opt.idx])}" alt="選項 ${opt.key} 附圖" loading="lazy">
+            </div>
+          `;
+        }
         html += `
           <div class="option-item ${selectedClass} ${disabledClass}" data-global-idx="${globalIdx}" data-option="${opt.key}">
             <span class="option-prefix">${opt.key}.</span>
-            <span class="option-text">${escapeHtml(opt.text)}</span>
+            <div class="option-content">
+              <span class="option-text">${escapeHtml(opt.text)}</span>
+              ${optImgHtml}
+            </div>
           </div>`;
       });
       html += `</div>`;
