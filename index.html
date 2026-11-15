@@ -58,7 +58,6 @@
     .special-chip.disabled .chip-count { background: #e2e4e8; color: #8a93a0; }
     .special-chip.other { border-color: #e0b96a; }
     .special-chip.other .chip-name { color: #a86f1e; }
-    /* 特殊練習區塊 */
     .practice-section { margin-top: 24px; padding-top: 20px; border-top: 2px dashed #dbe7f5; }
     .practice-label { font-size: 16px; font-weight: 700; color: #7a4a9e; margin-bottom: 12px; padding-left: 4px; border-left: 4px solid #9b6fc4; }
     .practice-buttons { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
@@ -168,7 +167,6 @@
       <div class="special-label">⭐ 特殊章節</div>
       <div class="special-chips" id="specialChips"></div>
     </div>
-    <!-- 特殊練習 -->
     <div class="practice-section" id="practiceSection">
       <div class="practice-label">🎯 特殊練習</div>
       <div class="practice-buttons">
@@ -181,7 +179,7 @@
         </button>
       </div>
       <div class="year-picker-panel hidden" id="yearPickerPanel">
-        <div class="year-picker-title">請選擇年份（該年份隨機取前 100 題，每頁 10 題）：</div>
+        <div class="year-picker-title">請選擇年份（該年份照順序取前 100 題，每頁 10 題）：</div>
         <div class="year-picker-chips" id="yearPickerChips"></div>
       </div>
     </div>
@@ -209,32 +207,47 @@
   const IMAGE_BASE_URL = 'https://raw.githubusercontent.com/tctp8/bank/main/emt-images/';
 
   // ======================= 圖片清單 =======================
+  // 規則：
+  //   選項附圖：{年度}_q{題號}_{A|B|C|D}.png
+  //   題目附圖：其餘（無後綴、_1、_2、_3、_4 等）一律視為題目附圖
   const IMAGE_FILES = [
     '108_q013.png','108_q026.png','108_q036.png','108_q037.png','108_q040.png',
     '108_q046.png','108_q067_1.png','108_q067_2.png','108_q073.png','108_q074.png',
-    '109_q009_1.png','109_q009_2.png','109_q009_3.png','109_q009_4.png',
+    '109_q009_A.png','109_q009_B.png','109_q009_C.png','109_q009_D.png',
     '109_q014.png','109_q045.png','109_q055.png','109_q064.png','109_q068.png',
     '110_q024.png','110_q035.png','110_q039.png','110_q054.png','110_q058.png',
     '110_q059.png','110_q063.png',
-    '111_q039.png','111_q061.png','111_q15_1.png','111_q15_2.png','111_q15_3.png','111_q15_4.png',
-    '112_q009_1.png','112_q009_2.png','112_q056.png','112_q057.png',
-    '112_q058_1.png','112_q058_2.png','112_q058_3.png','112_q058_4.png',
-    '112_q060.png','112_q083_1.png','112_q083_2.png','112_q083_3.png','112_q083_4.png',
+    '111_q015_A.png','111_q015_B.png','111_q015_C.png','111_q015_D.png',
+    '111_q039.png','111_q061.png',
+    '112_q009_A.png','112_q009_D.png','112_q056.png','112_q057.png',
+    '112_q058_A.png','112_q058_B.png','112_q058_C.png','112_q058_D.png',
+    '112_q060.png','112_q083_A.png','112_q083_B.png','112_q083_C.png','112_q083_D.png',
     '112_q088.png','113_q054.png','113_q056.png','114_q055.png',
   ];
 
+  // 解析圖片清單
+  // IMAGE_MAP[key] = { question: [檔名...], options: { A:檔名, B:檔名, ... } }
   const IMAGE_MAP = {};
   (function buildImageMap() {
+    const optionSuffixMap = { 'A': 'A', 'B': 'B', 'C': 'C', 'D': 'D' };
+
     IMAGE_FILES.forEach(fname => {
-      const m = fname.match(/^(\d+)_q(\d+)(?:_(\d+))?\.png$/i);
+      // 解析：{year}_q{num}(_{suffix})?.png
+      const m = fname.match(/^(\d+)_q(\d+)(?:_([A-Za-z0-9]+))?\.png$/i);
       if (!m) { console.warn('無法解析圖片檔名：', fname); return; }
       const year = m[1];
       const num = parseInt(m[2], 10);
-      const idx = m[3] ? parseInt(m[3], 10) : null;
+      const suffix = m[3]; // 可能是 A/B/C/D，或 1/2/3/4，或 undefined
       const key = `${year}_${num}`;
-      if (!IMAGE_MAP[key]) IMAGE_MAP[key] = { question: null, options: {} };
-      if (idx === null) IMAGE_MAP[key].question = fname;
-      else IMAGE_MAP[key].options[idx] = fname;
+      if (!IMAGE_MAP[key]) IMAGE_MAP[key] = { question: [], options: {} };
+
+      if (suffix && optionSuffixMap[suffix.toUpperCase()]) {
+        // 選項附圖（僅 A/B/C/D）
+        IMAGE_MAP[key].options[optionSuffixMap[suffix.toUpperCase()]] = fname;
+      } else {
+        // 其餘一律視為題目附圖
+        IMAGE_MAP[key].question.push(fname);
+      }
     });
   })();
 
@@ -282,12 +295,12 @@
   let selectedYears = new Set();
 
   let currentChapter = '';
-  let currentMode = '';      // 'chapter' | 'images' | 'year100'
+  let currentMode = '';
   let currentYear = '';
   let fullQuestions = [];
   let currentQuestions = [];
   let pageSize = 'all';
-  let forcePageSize = null;  // 特殊模式強制每頁題數（例如 10）
+  let forcePageSize = null;
   let currentPage = 0;
   let totalPages = 1;
 
@@ -352,7 +365,6 @@
 
   perPageSelect.addEventListener('change', function() {
     pageSize = this.value;
-    // 若目前在特殊模式，強制 pageSize 不影響
     if (forcePageSize !== null) pageSize = String(forcePageSize);
   });
 
@@ -391,12 +403,10 @@
     if (chapterKey) startQuiz('chapter', chapterKey);
   });
 
-  // 有圖片的題目
   practiceImageBtn.addEventListener('click', function() {
     startQuiz('images');
   });
 
-  // 依年份出 100 題：展開年份選單
   practiceYearBtn.addEventListener('click', function() {
     yearPickerPanel.classList.toggle('hidden');
     if (!yearPickerPanel.classList.contains('hidden')) {
@@ -661,7 +671,6 @@
     specialChips.appendChild(otherChip);
   }
 
-  // ======================= 年份選擇器（依年份出 100 題） =======================
   function renderYearPicker() {
     yearPickerChips.innerHTML = '';
     if (allYears.length === 0) {
@@ -701,7 +710,6 @@
     } else if (mode === 'images') {
       currentChapter = '';
       currentYear = '';
-      // 所有有圖片的題目（不受年份篩選影響）
       const imgQuestions = questionBank.filter(q => getImagesForQuestion(q.年度, q.題號) !== null);
       fullQuestions = shuffleArray(imgQuestions);
       forcePageSize = null;
@@ -709,10 +717,9 @@
     } else if (mode === 'year100') {
       currentChapter = '';
       currentYear = param;
-      // 該年份所有題目，照順序取前 100 題（不受年份篩選影響）
       const yearQuestions = questionBank.filter(q => q.年度 === param);
       fullQuestions = yearQuestions.slice(0, 100);
-      forcePageSize = 10;  // 強制每頁 10 題
+      forcePageSize = 10;
       pageSize = '10';
     }
 
@@ -783,10 +790,10 @@
       const isAnswered = answeredState[globalIdx];
       const userAnswer = userAnswers[globalIdx];
       const options = [
-        { key: 'A', text: q.選項A, idx: 1 },
-        { key: 'B', text: q.選項B, idx: 2 },
-        { key: 'C', text: q.選項C, idx: 3 },
-        { key: 'D', text: q.選項D, idx: 4 },
+        { key: 'A', text: q.選項A },
+        { key: 'B', text: q.選項B },
+        { key: 'C', text: q.選項C },
+        { key: 'D', text: q.選項D },
       ].filter(opt => opt.text !== '');
       const correctAnswer = q.答案;
       const isMultipleChoice = correctAnswer.length > 1;
@@ -798,8 +805,11 @@
           <div class="question-text">${escapeHtml(q.題目)}</div>
       `;
 
-      if (imgInfo && imgInfo.question) {
-        html += `<div class="question-image"><img src="${buildImageUrl(imgInfo.question)}" alt="題目附圖" loading="lazy"></div>`;
+      // 題目附圖（可能有多張：無後綴、_1、_2 等）
+      if (imgInfo && imgInfo.question && imgInfo.question.length > 0) {
+        imgInfo.question.forEach(fname => {
+          html += `<div class="question-image"><img src="${buildImageUrl(fname)}" alt="題目附圖" loading="lazy"></div>`;
+        });
       }
 
       html += `
@@ -815,8 +825,9 @@
         let selectedClass = (isAnswered && userAnswer.includes(opt.key)) ? 'selected' : '';
         const disabledClass = isAnswered ? 'disabled' : '';
         let optImgHtml = '';
-        if (imgInfo && imgInfo.options && imgInfo.options[opt.idx]) {
-          optImgHtml = `<div class="option-image"><img src="${buildImageUrl(imgInfo.options[opt.idx])}" alt="選項 ${opt.key} 附圖" loading="lazy"></div>`;
+        // 選項附圖（只有 _A/_B/_C/_D）
+        if (imgInfo && imgInfo.options && imgInfo.options[opt.key]) {
+          optImgHtml = `<div class="option-image"><img src="${buildImageUrl(imgInfo.options[opt.key])}" alt="選項 ${opt.key} 附圖" loading="lazy"></div>`;
         }
         html += `
           <div class="option-item ${selectedClass} ${disabledClass}" data-global-idx="${globalIdx}" data-option="${opt.key}">
@@ -940,7 +951,6 @@
     questionContainer.innerHTML = '';
     pageActions.innerHTML = '';
     quizProgress.textContent = '';
-    // 收起年份選擇器
     yearPickerPanel.classList.add('hidden');
   }
 
